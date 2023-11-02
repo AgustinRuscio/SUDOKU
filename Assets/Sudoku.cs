@@ -31,6 +31,8 @@ public class Sudoku : MonoBehaviour
     float phase;
     float samplingF = 48000;
 
+    //-------Variables propias
+    private int _lastX = 0, _lastY = 0;
 
     void Start()
     {
@@ -44,6 +46,9 @@ public class Sudoku : MonoBehaviour
         ClearBoard();
         
         CreateNew();
+
+        _lastX = 0;
+	        _lastY = 0;
     }
 
     void ClearBoard() {
@@ -77,35 +82,76 @@ public class Sudoku : MonoBehaviour
     {
 	    //Aplicar recuercion para ir resolviendo
 	    int count = 0;
-	    
-	    if (CanPlaceValue(matrixParent, count, x, y))
-	    {
-		    //Si se ppuede??
-	    }
-	    
-		count++;
 
-		if (count <= 9)
-		{
-		    return RecuSolve(matrixParent, x, y, matrixParent.Capacity, solution);
-		}
-		else
-		{
+	    if (!_board[x, y].locked)
+	    {
+		    Debug.Log($"La Casilla x= {x} e y= {y} esta llena");
+		    
 		    x++;
-		    if (y > matrixParent.Height)
+		    if (x > matrixParent.Height)
 		    {
 			    x = 0;
 			    y++;
 
 			    if (y > matrixParent.Width)
+			    {
+					Debug.Log("La ultima esta llena");
 				    return false;
+			    }
+			    
+			    Debug.Log($"La Casilla x ahora vale {x}");
+			    Debug.Log($"La Casilla y ahora vale {y}");
 		    }
-		    
+	
 		    return RecuSolve(matrixParent, x, y, matrixParent.Capacity, solution);
-		    
-		    
 	    }
-	    return false;
+			
+	    
+	    if (CanPlaceValue(matrixParent, count, x, y))
+	    {
+		    //Si se ppuede, como lo lleno??
+		    
+		    Debug.Log($"El valor {count} en la casilla x= {x} e y= {y} va bien");
+		    
+		    _lastX = x;
+		    _lastY = y;
+
+		    //var cell = new Cell();
+		    //cell.number = count;
+		    //_board[x, y] = cell;
+		    return true;
+	    }
+	    else
+	    {
+			count++;
+	
+			if (count <= 9)
+			{
+				Debug.Log($"El valor {count} todavia es menor a 9 sigo recursando casillero x= {x} e y= {y}");
+
+			    return RecuSolve(matrixParent, x, y, matrixParent.Capacity, solution);
+			}
+			else
+			{
+				x++;
+				if (x > matrixParent.Height)
+				{
+					x = 0;
+					y++;
+
+					if (y > matrixParent.Width)
+					{
+						Debug.Log("La ultima esta llena");
+						return false;
+					}
+				}
+				
+				
+				Debug.Log($"El valor {count} todavia es mayor a 9 auemnto de casillero x= {x} e y= {y}");
+				return RecuSolve(matrixParent, x, y, matrixParent.Capacity, solution);
+			}
+	    }
+	    
     }
 
 
@@ -147,7 +193,7 @@ public class Sudoku : MonoBehaviour
         nums = new List<int>();
         var solution = new List<Matrix<int>>();
         watchdog = 100000;
-        var result = RecuSolve(_createdMatrix, 1,2,_createdMatrix.Capacity, solution);//????
+        var result = RecuSolve(_createdMatrix, _lastX,_lastY,_createdMatrix.Capacity, solution);//????
         long mem = System.GC.GetTotalMemory(true);
         memory = string.Format("MEM: {0:f2}MB", mem / (1024f * 1024f));
         canSolve = result ? " VALID" : " INVALID";
