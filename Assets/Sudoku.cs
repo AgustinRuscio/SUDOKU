@@ -47,8 +47,7 @@ public class Sudoku : MonoBehaviour
         
         CreateNew();
 
-        _lastX = 0;
-	        _lastY = 0;
+        _lastX = 0; _lastY = 0;
     }
 
     void ClearBoard() {
@@ -81,19 +80,21 @@ public class Sudoku : MonoBehaviour
 	bool RecuSolve(Matrix<int> matrixParent, int x, int y, int protectMaxDepth, List<Matrix<int>> solution)
     {
 	    //Aplicar recuercion para ir resolviendo
-	    int count = 0;
+	    
 
-	    if (!_board[x, y].locked)
+	    Debug.Log($"Ni bien empiezo : X= {x} ; Y= {y}");
+	    
+	    if (_board[x, y].locked)
 	    {
 		    Debug.Log($"La Casilla x= {x} e y= {y} esta llena");
 		    
 		    x++;
-		    if (x > matrixParent.Height)
+		    if (x >= matrixParent.Height)
 		    {
 			    x = 0;
 			    y++;
 
-			    if (y > matrixParent.Width)
+			    if (y >= matrixParent.Width)
 			    {
 					Debug.Log("La ultima esta llena");
 				    return false;
@@ -105,20 +106,32 @@ public class Sudoku : MonoBehaviour
 	
 		    return RecuSolve(matrixParent, x, y, matrixParent.Capacity, solution);
 	    }
-			
 	    
+	    int count = 1;
+
 	    if (CanPlaceValue(matrixParent, count, x, y))
 	    {
 		    //Si se ppuede, como lo lleno??
-		    
-		    Debug.Log($"El valor {count} en la casilla x= {x} e y= {y} va bien");
-		    
-		    _lastX = x;
-		    _lastY = y;
 
-		    //var cell = new Cell();
-		    //cell.number = count;
-		    //_board[x, y] = cell;
+		    Debug.Log($"El valor {count} en la casilla x= {x} e y= {y} va bien");
+
+		    _board[x, y].number = count;
+
+		    Debug.Log($"El nuevo valor en la casilla x= {x} e y= {y} es : {count}");
+		    
+		    _lastX = x + 1;
+
+		    if (_lastX >= matrixParent.Height)
+		    {
+			    _lastX = 0;
+				_lastY = y+1;
+				
+				if (_lastY >= matrixParent.Width)
+				{
+					Debug.Log("Todas las casillas recorridas");
+				}
+		    }
+		    
 		    return true;
 	    }
 	    else
@@ -134,19 +147,19 @@ public class Sudoku : MonoBehaviour
 			else
 			{
 				x++;
-				if (x > matrixParent.Height)
+				if (x >= matrixParent.Height)
 				{
 					x = 0;
 					y++;
 
-					if (y > matrixParent.Width)
+					if (y >= matrixParent.Width)
 					{
 						Debug.Log("La ultima esta llena");
 						return false;
 					}
 				}
-				
-				
+
+				count = 1;
 				Debug.Log($"El valor {count} todavia es mayor a 9 auemnto de casillero x= {x} e y= {y}");
 				return RecuSolve(matrixParent, x, y, matrixParent.Capacity, solution);
 			}
@@ -154,6 +167,59 @@ public class Sudoku : MonoBehaviour
 	    
     }
 
+	bool RecuSolve2(Matrix<int> matrixParent, int x, int y, int protectMaxDepth, List<Matrix<int>> solution)
+	{
+		Debug.Log($"Arranco en la celda X= {x} :: Y= {y}");
+		
+		if (_board[x, y].locked || !_board[x,y].isEmpty)
+		{
+			Debug.Log($"la celdas X= {x} :: Y= {y} estaba blockeada");
+			
+			_lastX = x + 1;
+
+			if (_lastX >= matrixParent.Height)
+			{
+				_lastX = 0;
+				_lastY = y+1;
+				
+				if (_lastY >= matrixParent.Width)
+				{
+					Debug.Log("Todas las casillas recorridas");
+				}
+			}
+
+			return RecuSolve2(matrixParent, _lastX, _lastY, 0, solution);
+		}
+
+		Debug.Log($"la celdas X= {x} :: Y= {y} NO está blockeada");
+
+		int count = protectMaxDepth;
+
+		if (CanPlaceValue(matrixParent, count, x, y))
+		{
+			_board[x, y].number = count;
+
+			Debug.Log($"El nuevo valor en la casilla x= {x} e y= {y} es : {count}");
+			
+			_lastX = x + 1;
+
+			if (_lastX >= matrixParent.Height)
+			{
+				_lastX = 0;
+				_lastY = y+1;
+				
+				if (_lastY >= matrixParent.Width)
+				{
+					Debug.Log("Todas las casillas recorridas");
+				}
+			}
+			return true;
+		}
+		else
+		{
+			return RecuSolve2(matrixParent, _lastX, _lastY, count+=1, solution);
+		}
+	}
 
     void OnAudioFilterRead(float[] array, int channels)
     {
@@ -193,7 +259,7 @@ public class Sudoku : MonoBehaviour
         nums = new List<int>();
         var solution = new List<Matrix<int>>();
         watchdog = 100000;
-        var result = RecuSolve(_createdMatrix, _lastX,_lastY,_createdMatrix.Capacity, solution);//????
+        var result = RecuSolve2(_createdMatrix, _lastX,_lastY,1, solution);//????
         long mem = System.GC.GetTotalMemory(true);
         memory = string.Format("MEM: {0:f2}MB", mem / (1024f * 1024f));
         canSolve = result ? " VALID" : " INVALID";
