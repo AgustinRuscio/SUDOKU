@@ -64,8 +64,8 @@ public class Sudoku : MonoBehaviour
 		float startY = spacing * 4f;
 
 		_board = new Matrix<Cell>(_bigSide, _bigSide);
-		for(int x = 0; x<_board.Width; x++) {
-			for(int y = 0; y<_board.Height; y++) {
+		for(int x = 0; x<_board.WidthX; x++) {
+			for(int y = 0; y<_board.HeightY; y++) {
                 var cell = _board[x, y] = Instantiate(prefabCell);
 				cell.transform.SetParent(canvas.transform, false);
 				cell.transform.localPosition = new Vector3(startX + x * spacing, startY - y * spacing, 0);
@@ -84,17 +84,17 @@ public class Sudoku : MonoBehaviour
 
 	    Debug.Log($"Ni bien empiezo : X= {x} ; Y= {y}");
 	    
-	    if (_board[x, y].locked)
+	    if (_board[x, y].locked || matrixParent[x, y] != 0)
 	    {
 		    Debug.Log($"La Casilla x= {x} e y= {y} esta llena");
 		    
 		    x++;
-		    if (x >= matrixParent.Height)
+		    if (x >= matrixParent.HeightY)
 		    {
 			    x = 0;
 			    y++;
 
-			    if (y >= matrixParent.Width)
+			    if (y >= matrixParent.WidthX)
 			    {
 					Debug.Log("La ultima esta llena");
 				    return false;
@@ -107,64 +107,41 @@ public class Sudoku : MonoBehaviour
 		    return RecuSolve(matrixParent, x, y, matrixParent.Capacity, solution);
 	    }
 	    
-	    int count = 1;
+	    //int count = 1;
+	    Debug.Log($"La casilla : X= {x} ; Y= {y} Está vacia");
+	    Debug.Log($"{matrixParent[x,y]} Valor en casilla");
+	    Debug.Log($"{matrixParent.Capacity} capacity total");
 
-	    if (CanPlaceValue(matrixParent, count, x, y))
-	    {
-		    //Si se ppuede, como lo lleno??
-
-		    Debug.Log($"El valor {count} en la casilla x= {x} e y= {y} va bien");
-
-		    _board[x, y].number = count;
-
-		    Debug.Log($"El nuevo valor en la casilla x= {x} e y= {y} es : {count}");
-		    
-		    _lastX = x + 1;
-
-		    if (_lastX >= matrixParent.Height)
-		    {
-			    _lastX = 0;
-				_lastY = y+1;
-				
-				if (_lastY >= matrixParent.Width)
-				{
-					Debug.Log("Todas las casillas recorridas");
-				}
-		    }
-		    
-		    return true;
-	    }
-	    else
-	    {
-			count++;
-	
-			if (count <= 9)
-			{
-				Debug.Log($"El valor {count} todavia es menor a 9 sigo recursando casillero x= {x} e y= {y}");
-
-			    return RecuSolve(matrixParent, x, y, matrixParent.Capacity, solution);
-			}
-			else
-			{
-				x++;
-				if (x >= matrixParent.Height)
-				{
-					x = 0;
-					y++;
-
-					if (y >= matrixParent.Width)
-					{
-						Debug.Log("La ultima esta llena");
-						return false;
-					}
-				}
-
-				count = 1;
-				Debug.Log($"El valor {count} todavia es mayor a 9 auemnto de casillero x= {x} e y= {y}");
-				return RecuSolve(matrixParent, x, y, matrixParent.Capacity, solution);
-			}
-	    }
 	    
+	    for (int i = 1; i <= 9; i++)
+	    {
+		    Debug.Log($"Puebo el valor {i} En La casilla : X= {x} ; Y= {y}");
+		   
+		    if (CanPlaceValue(matrixParent,i,x,y))
+		    {
+			    matrixParent[x, y] = i;
+			    _board[x, y].number = matrixParent[x, y]; //Aca lo muestra en trablero
+			    
+			    Debug.Log($"En la casilla : X= {x} ; Y= {y} va el valor : {i}");
+			    _lastX = x + 1;
+
+			    if (_lastX >= matrixParent.HeightY)
+			    {
+				    _lastX = 0;
+				    _lastY = y+1;
+				
+				    if (_lastY >= matrixParent.WidthX)
+				    {
+					    Debug.Log("Todas las casillas recorridas");
+				    }
+			    }
+			    return true;
+		    }
+	    }
+
+	    Debug.Log($"No pude poner ningun valor");
+	    //Ir para atras backtrackiong
+	    return false;
     }
 
 	bool RecuSolve2(Matrix<int> matrixParent, int x, int y, int protectMaxDepth, List<Matrix<int>> solution)
@@ -177,12 +154,12 @@ public class Sudoku : MonoBehaviour
 			
 			_lastX = x + 1;
 
-			if (_lastX >= matrixParent.Height)
+			if (_lastX >= matrixParent.HeightY)
 			{
 				_lastX = 0;
 				_lastY = y+1;
 				
-				if (_lastY >= matrixParent.Width)
+				if (_lastY >= matrixParent.WidthX)
 				{
 					Debug.Log("Todas las casillas recorridas");
 				}
@@ -203,12 +180,12 @@ public class Sudoku : MonoBehaviour
 			
 			_lastX = x + 1;
 
-			if (_lastX >= matrixParent.Height)
+			if (_lastX >= matrixParent.HeightY)
 			{
 				_lastX = 0;
 				_lastY = y+1;
 				
-				if (_lastY >= matrixParent.Width)
+				if (_lastY >= matrixParent.WidthX)
 				{
 					Debug.Log("Todas las casillas recorridas");
 				}
@@ -259,11 +236,13 @@ public class Sudoku : MonoBehaviour
         nums = new List<int>();
         var solution = new List<Matrix<int>>();
         watchdog = 100000;
-        var result = RecuSolve2(_createdMatrix, _lastX,_lastY,1, solution);//????
+        var result = RecuSolve(_createdMatrix, _lastX,_lastY,1, solution);//????
         long mem = System.GC.GetTotalMemory(true);
         memory = string.Format("MEM: {0:f2}MB", mem / (1024f * 1024f));
         canSolve = result ? " VALID" : " INVALID";
-		//???
+		
+        //TranslateAllValues();
+        //???
     }
 
     void CreateSudoku()
@@ -309,8 +288,8 @@ public class Sudoku : MonoBehaviour
 
 	void ClearUnlocked(Matrix<int> mtx)
 	{
-		for (int i = 0; i < _board.Height; i++) {
-			for (int j = 0; j < _board.Width; j++) {
+		for (int i = 0; i < _board.HeightY; i++) {
+			for (int j = 0; j < _board.WidthX; j++) {
 				if (!_board [j, i].locked)
 					mtx[j,i] = Cell.EMPTY;
 			}
@@ -320,8 +299,8 @@ public class Sudoku : MonoBehaviour
 	void LockRandomCells()
 	{
 		List<Vector2> posibles = new List<Vector2> ();
-		for (int i = 0; i < _board.Height; i++) {
-			for (int j = 0; j < _board.Width; j++) {
+		for (int i = 0; i < _board.HeightY; i++) {
+			for (int j = 0; j < _board.WidthX; j++) {
 				if (!_board [j, i].locked)
 					posibles.Add (new Vector2(j,i));
 			}
@@ -335,9 +314,9 @@ public class Sudoku : MonoBehaviour
 
     void TranslateAllValues(Matrix<int> matrix)
     {
-        for (int y = 0; y < _board.Height; y++)
+        for (int y = 0; y < _board.HeightY; y++)
         {
-            for (int x = 0; x < _board.Width; x++)
+            for (int x = 0; x < _board.WidthX; x++)
             {
                 _board[x, y].number = matrix[x, y];
             }
@@ -377,9 +356,9 @@ public class Sudoku : MonoBehaviour
 
         Vector2 cuadrante = Vector2.zero;
 
-        for (int i = 0; i < mtx.Height; i++)
+        for (int i = 0; i < mtx.HeightY; i++)
         {
-            for (int j = 0; j < mtx.Width; j++)
+            for (int j = 0; j < mtx.WidthX; j++)
             {
                 if (i != y && j == x) columna.Add(mtx[j, i]);
                 else if(i == y && j != x) fila.Add(mtx[j,i]);
