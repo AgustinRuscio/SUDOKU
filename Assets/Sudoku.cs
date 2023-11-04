@@ -81,7 +81,6 @@ public class Sudoku : MonoBehaviour
     {
 	    //Aplicar recuercion para ir resolviendo
 	    
-
 	    Debug.Log($"Ni bien empiezo : X= {x} ; Y= {y}");
 	    
 	    if (_board[x, y].locked || matrixParent[x, y] != 0)
@@ -140,64 +139,10 @@ public class Sudoku : MonoBehaviour
 	    }
 
 	    Debug.Log($"No pude poner ningun valor");
-	    //Ir para atras backtrackiong
+	    //Ir para atras : backtrackiong
 	    return false;
     }
-
-	bool RecuSolve2(Matrix<int> matrixParent, int x, int y, int protectMaxDepth, List<Matrix<int>> solution)
-	{
-		Debug.Log($"Arranco en la celda X= {x} :: Y= {y}");
-		
-		if (_board[x, y].locked || !_board[x,y].isEmpty)
-		{
-			Debug.Log($"la celdas X= {x} :: Y= {y} estaba blockeada");
-			
-			_lastX = x + 1;
-
-			if (_lastX >= matrixParent.HeightY)
-			{
-				_lastX = 0;
-				_lastY = y+1;
-				
-				if (_lastY >= matrixParent.WidthX)
-				{
-					Debug.Log("Todas las casillas recorridas");
-				}
-			}
-
-			return RecuSolve2(matrixParent, _lastX, _lastY, 0, solution);
-		}
-
-		Debug.Log($"la celdas X= {x} :: Y= {y} NO está blockeada");
-
-		int count = protectMaxDepth;
-
-		if (CanPlaceValue(matrixParent, count, x, y))
-		{
-			_board[x, y].number = count;
-
-			Debug.Log($"El nuevo valor en la casilla x= {x} e y= {y} es : {count}");
-			
-			_lastX = x + 1;
-
-			if (_lastX >= matrixParent.HeightY)
-			{
-				_lastX = 0;
-				_lastY = y+1;
-				
-				if (_lastY >= matrixParent.WidthX)
-				{
-					Debug.Log("Todas las casillas recorridas");
-				}
-			}
-			return true;
-		}
-		else
-		{
-			return RecuSolve2(matrixParent, _lastX, _lastY, count+=1, solution);
-		}
-	}
-
+	
     void OnAudioFilterRead(float[] array, int channels)
     {
         if(canPlayMusic)
@@ -241,7 +186,7 @@ public class Sudoku : MonoBehaviour
         memory = string.Format("MEM: {0:f2}MB", mem / (1024f * 1024f));
         canSolve = result ? " VALID" : " INVALID";
 		
-        //TranslateAllValues();
+        TranslateAllValues(_createdMatrix);
         //???
     }
 
@@ -288,8 +233,10 @@ public class Sudoku : MonoBehaviour
 
 	void ClearUnlocked(Matrix<int> mtx)
 	{
-		for (int i = 0; i < _board.HeightY; i++) {
-			for (int j = 0; j < _board.WidthX; j++) {
+		for (int i = 0; i < _board.HeightY; i++) 
+		{
+			for (int j = 0; j < _board.WidthX; j++) 
+			{
 				if (!_board [j, i].locked)
 					mtx[j,i] = Cell.EMPTY;
 			}
@@ -299,13 +246,16 @@ public class Sudoku : MonoBehaviour
 	void LockRandomCells()
 	{
 		List<Vector2> posibles = new List<Vector2> ();
-		for (int i = 0; i < _board.HeightY; i++) {
-			for (int j = 0; j < _board.WidthX; j++) {
+		for (int i = 0; i < _board.HeightY; i++)
+		{
+			for (int j = 0; j < _board.WidthX; j++)
+			{
 				if (!_board [j, i].locked)
 					posibles.Add (new Vector2(j,i));
 			}
 		}
-		for (int k = 0; k < 82-difficulty; k++) {
+		for (int k = 0; k < 82-difficulty; k++) 
+		{
 			int r = Random.Range (0, posibles.Count);
 			_board [(int)posibles [r].x, (int)posibles [r].y].locked = true;
 			posibles.RemoveAt (r);
@@ -314,13 +264,9 @@ public class Sudoku : MonoBehaviour
 
     void TranslateAllValues(Matrix<int> matrix)
     {
-        for (int y = 0; y < _board.HeightY; y++)
-        {
-            for (int x = 0; x < _board.WidthX; x++)
-            {
-                _board[x, y].number = matrix[x, y];
-            }
-        }
+        for (int y = 0; y < _board.HeightY; y++) 
+			for (int x = 0; x < _board.WidthX; x++)
+				_board[x, y].number = matrix[x, y];
     }
 
     void TranslateSpecific(int value, int x, int y)
@@ -331,13 +277,10 @@ public class Sudoku : MonoBehaviour
     void TranslateRange(int x0, int y0, int xf, int yf)
     {
         for (int x = x0; x < xf; x++)
-        {
-            for (int y = y0; y < yf; y++)
-            {
-                _board[x, y].number = _createdMatrix[x, y];
-            }
-        }
+			for (int y = y0; y < yf; y++)
+				_board[x, y].number = _createdMatrix[x, y];
     }
+    
     void CreateNew()
     {
         _createdMatrix = new Matrix<int>(Tests.validBoards[Tests.validBoards.Length-1]);
@@ -400,9 +343,9 @@ public class Sudoku : MonoBehaviour
     {
         List<int> aux = new List<int>();
         for (int i = 0; i < list.Count; i++)
-        {
-            if (list[i] != 0) aux.Add(list[i]);
-        }
+	        if (list[i] != 0) aux.Add(list[i]);
+        
+        
         return aux;
     }
 }
