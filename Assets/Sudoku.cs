@@ -9,7 +9,7 @@ public class Sudoku : MonoBehaviour
 	public Cell prefabCell;
 	public Canvas canvas;
 	public Text feedback;
-	public float stepDuration = 0.05f;
+	public float stepDuration = 0.5f;
 	[Range(1, 82)]public int difficulty = 40;
 
 	Matrix<Cell> _board;
@@ -77,13 +77,14 @@ public class Sudoku : MonoBehaviour
 
 	//IMPLEMENTAR
 	int watchdog = 0;
+	private int count = 0;
 	bool RecuSolve(Matrix<int> matrixParent, int x, int y, int protectMaxDepth, List<Matrix<int>> solution)
     {
 	    //Aplicar recuercion para ir resolviendo
 	    
 	    Debug.Log($"Ni bien empiezo : X= {x} ; Y= {y}");
 	    
-	    if (_board[x, y].locked || matrixParent[x, y] != 0)
+	    if (_board[x, y].locked)
 	    {
 		    Debug.Log($"La Casilla x= {x} e y= {y} esta llena");
 		    
@@ -96,7 +97,7 @@ public class Sudoku : MonoBehaviour
 			    if (y >= matrixParent.WidthX)
 			    {
 					Debug.Log("La ultima esta llena");
-				    return false;
+				    return true;
 			    }
 			    
 			    Debug.Log($"La Casilla x ahora vale {x}");
@@ -119,11 +120,19 @@ public class Sudoku : MonoBehaviour
 		    if (CanPlaceValue(matrixParent,i,x,y))
 		    {
 			    matrixParent[x, y] = i;
-			    _board[x, y].number = matrixParent[x, y]; //Aca lo muestra en trablero
 			    
+			    //Sequenciad
+			    Matrix<int> p;
+			    p = matrixParent.Clone();
+			    
+			    solution.Add(p);
+
+			    count++;
+			    //--
 			    Debug.Log($"En la casilla : X= {x} ; Y= {y} va el valor : {i}");
 			    _lastX = x + 1;
-
+			    _lastY = y;
+			    
 			    if (_lastX >= matrixParent.HeightY)
 			    {
 				    _lastX = 0;
@@ -131,15 +140,24 @@ public class Sudoku : MonoBehaviour
 				
 				    if (_lastY >= matrixParent.WidthX)
 				    {
-					    Debug.Log("Todas las casillas recorridas");
+					    return true; //Aca se termina termina
 				    }
 			    }
-			    return true;
+
+			    if (RecuSolve(matrixParent, _lastX, _lastY, protectMaxDepth, solution)) //Recursar asi con un slo click sigue
+			    {
+				    //Si vuelve true, se completa
+				    return true;
+			    }
+			    else
+			    {
+				    count--;
+				    matrixParent[x, y] = 0;
+			    }
 		    }
 	    }
 
 	    Debug.Log($"No pude poner ningun valor");
-	    //Ir para atras : backtrackiong
 	    return false;
     }
 	
@@ -163,8 +181,19 @@ public class Sudoku : MonoBehaviour
 
 	//IMPLEMENTAR - punto 3
 	IEnumerator ShowSequence(List<Matrix<int>> seq)
-    {
-        yield return new WaitForSeconds(0);
+	{
+		int ca = 0;
+		
+		Debug.Log("Count: " + count);
+		
+        while (ca < seq.Count)
+        {
+	        yield return new WaitForSeconds(stepDuration);
+	        TranslateAllValues(seq[ca]);
+	        ca++;
+	        count--;
+			Debug.Log("Count iterando: " + count);
+        }
     }
 
 	void Update () {
@@ -186,7 +215,9 @@ public class Sudoku : MonoBehaviour
         memory = string.Format("MEM: {0:f2}MB", mem / (1024f * 1024f));
         canSolve = result ? " VALID" : " INVALID";
 		
-        TranslateAllValues(_createdMatrix);
+        //TranslateAllValues(_createdMatrix);
+        StartCoroutine(ShowSequence(solution));
+
         //???
     }
 

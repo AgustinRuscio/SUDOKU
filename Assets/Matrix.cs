@@ -25,20 +25,20 @@ public class Matrix<T> : IEnumerable<T>
     {
         //IMPLEMENTAR: crea una version de Matrix a partir de una matriz básica de C#
 
-        _widthX = copyFrom.GetLength(1);
-        _heightY = copyFrom.GetLength(0);
+        _widthX = copyFrom.GetLength(0);
+        _heightY = copyFrom.GetLength(1);
         _length = _widthX * _heightY;
 
         _data = new T[_length];
 
         for (int i = 0; i < _heightY; i++)
 			for (int j = 0; j < _widthX; j++)
-		        _data[i * _widthX + j] = copyFrom[i, j];
+		        this[j,i] = copyFrom[j, i];
     }
 
 	public Matrix<T> Clone() 
 	{
-        Matrix<T> aux = new Matrix<T>(WidthX, HeightY);
+        Matrix<T> aux = new Matrix<T>(_widthX, _heightY);
         //IMPLEMENTAR
 
         for (int i = 0; i < _data.Length; i++)
@@ -58,7 +58,7 @@ public class Matrix<T> : IEnumerable<T>
         {
             for (int j = x0; j < x1; j++)
             {
-                _data[j + _widthX * i] = item;
+                this[j,i] = item;
             }
         }
     }
@@ -75,7 +75,7 @@ public class Matrix<T> : IEnumerable<T>
         {
             for (int j = x0; j < x1; j++)
             {
-                l.Add(_data[j + _widthX * i]);
+                l.Add(this[j,i]);
             }
         }
 
@@ -92,7 +92,6 @@ public class Matrix<T> : IEnumerable<T>
 				throw new System.Exception("Index out");
 
             return _data[x + _widthX * y];
-            //return _data[x + _height * y];
             //return default(T);
 		}
 		set 
@@ -101,7 +100,6 @@ public class Matrix<T> : IEnumerable<T>
 				throw new System.Exception("Index out");
 
 			_data[x + _widthX * y] = value;
-			//_data[x + _height * y] = value;
             //IMPLEMENTAR
 		}
 	}
