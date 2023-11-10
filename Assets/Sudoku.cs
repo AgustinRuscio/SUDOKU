@@ -34,13 +34,16 @@ public class Sudoku : MonoBehaviour
     //-------Variables propias
     private int _lastX = 0, _lastY = 0;
 
+    [SerializeField]
+    int xSize = 3, ySize = 3;
+    
     void Start()
     {
         long mem = System.GC.GetTotalMemory(true);
         feedback.text = string.Format("MEM: {0:f2}MB", mem / (1024f * 1024f));
         memory = feedback.text;
-        _smallSide = 3;
-        _bigSide = _smallSide * 3;
+        _smallSide = xSize;
+        _bigSide = _smallSide * ySize;
         frequency = frequency * Mathf.Pow(r, 2);
         CreateEmptyBoard();
         ClearBoard();
@@ -81,6 +84,10 @@ public class Sudoku : MonoBehaviour
 	bool RecuSolve(Matrix<int> matrixParent, int x, int y, int protectMaxDepth, List<Matrix<int>> solution)
     {
 	    //Aplicar recuercion para ir resolviendo
+
+	    watchdog--;
+	    if (watchdog <= 0)
+		    return false;
 	    
 	    Debug.Log($"Ni bien empiezo : X= {x} ; Y= {y}");
 	    
@@ -161,6 +168,80 @@ public class Sudoku : MonoBehaviour
 	    return false;
     }
 	
+	bool RecuSolve(Matrix<int> matrixParent, int x, int y)
+	{
+		//Aplicar recuercion para ir resolviendo
+	    
+		Debug.Log($"Ni bien empiezo : X= {x} ; Y= {y}");
+	    
+		if (_board[x, y].locked)
+		{
+			Debug.Log($"La Casilla x= {x} e y= {y} esta llena");
+		    
+			x++;
+			if (x >= matrixParent.HeightY)
+			{
+				x = 0;
+				y++;
+
+				if (y >= matrixParent.WidthX)
+				{
+					Debug.Log("La ultima esta llena");
+					return true;
+				}
+			    
+				Debug.Log($"La Casilla x ahora vale {x}");
+				Debug.Log($"La Casilla y ahora vale {y}");
+			}
+	
+			return RecuSolve(matrixParent, x, y);
+		}
+	    
+		//int count = 1;
+		Debug.Log($"La casilla : X= {x} ; Y= {y} Está vacia");
+		Debug.Log($"{matrixParent[x,y]} Valor en casilla");
+		Debug.Log($"{matrixParent.Capacity} capacity total");
+
+	    
+		for (int i = 1; i <= 9; i++)
+		{
+			Debug.Log($"Puebo el valor {i} En La casilla : X= {x} ; Y= {y}");
+		   
+			if (CanPlaceValue(matrixParent,i,x,y))
+			{
+				matrixParent[x, y] = i;
+			    
+				Debug.Log($"En la casilla : X= {x} ; Y= {y} va el valor : {i}");
+				_lastX = x + 1;
+				_lastY = y;
+			    
+				if (_lastX >= matrixParent.HeightY)
+				{
+					_lastX = 0;
+					_lastY = y+1;
+				
+					if (_lastY >= matrixParent.WidthX)
+					{
+						return true; //Aca se termina termina
+					}
+				}
+
+				if (RecuSolve(matrixParent, _lastX, _lastY)) //Recursar asi con un slo click sigue
+				{
+					//Si vuelve true, se completa
+					return true;
+				}
+				else
+				{
+					matrixParent[x, y] = 0;
+				}
+			}
+		}
+
+		Debug.Log($"No pude poner ningun valor");
+		return false;
+	}
+	
     void OnAudioFilterRead(float[] array, int channels)
     {
         if(canPlayMusic)
@@ -223,15 +304,23 @@ public class Sudoku : MonoBehaviour
 
     void CreateSudoku()
     {
+	    difficulty = 82;
         StopAllCoroutines();
         nums = new List<int>();
         canPlayMusic = false;
         ClearBoard();
         List<Matrix<int>> l = new List<Matrix<int>>();
         watchdog = 100000;
-        GenerateValidLine(_createdMatrix, 0, 0);
-        var result =false;
-        _createdMatrix = l[0].Clone();
+        //GenerateValidLine(_createdMatrix, 0, 0);
+        
+        int nunm = Random.Range(0, Tests.validBoards.Length - 1);
+        
+        _createdMatrix = new Matrix<int>(Tests.validBoards[nunm]);
+        var result = RecuSolve(_createdMatrix, _lastX,_lastY, 1 , l);
+       
+        //_createdMatrix = l[0].Clone();
+
+        difficulty = 38;
         LockRandomCells();
         ClearUnlocked(_createdMatrix);
         TranslateAllValues(_createdMatrix);
