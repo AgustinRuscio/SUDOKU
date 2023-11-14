@@ -48,7 +48,7 @@ public class Sudoku : MonoBehaviour
         CreateEmptyBoard();
         ClearBoard();
         
-        CreateNew();
+        //CreateNew();
 
         _lastX = 0; _lastY = 0;
     }
@@ -203,7 +203,7 @@ public class Sudoku : MonoBehaviour
 		Debug.Log($"{matrixParent.Capacity} capacity total");
 
 	    
-		for (int i = 1; i <= 9; i++)
+		for (int i = 1; i <= xSize*xSize; i++)
 		{
 			Debug.Log($"Puebo el valor {i} En La casilla : X= {x} ; Y= {y}");
 		   
@@ -304,26 +304,29 @@ public class Sudoku : MonoBehaviour
 
     void CreateSudoku()
     {
-	    difficulty = 82;
+	    //difficulty = 82;
         StopAllCoroutines();
         nums = new List<int>();
         canPlayMusic = false;
         ClearBoard();
         List<Matrix<int>> l = new List<Matrix<int>>();
         watchdog = 100000;
-        //GenerateValidLine(_createdMatrix, 0, 0);
         
-        int nunm = Random.Range(0, Tests.validBoards.Length - 1);
-        
-        _createdMatrix = new Matrix<int>(Tests.validBoards[nunm]);
-        var result = RecuSolve(_createdMatrix, _lastX,_lastY, 1 , l);
+        GenerateValidLine(_createdMatrix, 0, 0);
+        //int random = Random.Range(1, Tests.validBoards.Length-1);
+        //
+        //_createdMatrix = new Matrix<int>(Tests.validBoards[random]);
+        var result = RecuSolve(_createdMatrix, _lastX,1, 1 , l);
        
-        //_createdMatrix = l[0].Clone();
-
-        difficulty = 38;
+        _createdMatrix = l[l.Count-1].Clone();
+ 
+        //
+        difficulty = Random.Range(1, 82);
         LockRandomCells();
         ClearUnlocked(_createdMatrix);
         TranslateAllValues(_createdMatrix);
+        
+        
         long mem = System.GC.GetTotalMemory(true);
         memory = string.Format("MEM: {0:f2}MB", mem / (1024f * 1024f));
         canSolve = result ? " VALID" : " INVALID";
@@ -331,8 +334,8 @@ public class Sudoku : MonoBehaviour
     }
 	void GenerateValidLine(Matrix<int> mtx, int x, int y)
 	{
-		int[]aux = new int[9];
-		for (int i = 0; i < 9; i++) 
+		int[]aux = new int[xSize * ySize];
+		for (int i = 0; i < xSize * ySize; i++) 
 		{
 			aux [i] = i + 1;
 		}
@@ -430,23 +433,23 @@ public class Sudoku : MonoBehaviour
 
 
 
-        cuadrante.x = (int)(x / 3);
+        cuadrante.x = (int)(x / xSize);
 
-        if (x < 3)
+        if (x < xSize)
             cuadrante.x = 0;     
-        else if (x < 6)
-            cuadrante.x = 3;
+        else if (x < ySize + xSize)
+            cuadrante.x = xSize;
         else
-            cuadrante.x = 6;
+            cuadrante.x = ySize + xSize;
 
-        if (y < 3)
+        if (y < ySize)
             cuadrante.y = 0;
-        else if (y < 6)
-            cuadrante.y = 3;
+        else if (y < ySize)
+            cuadrante.y = ySize + xSize;
         else
-            cuadrante.y = 6;
+            cuadrante.y = ySize + xSize;
          
-        area = mtx.GetRange((int)cuadrante.x, (int)cuadrante.y, (int)cuadrante.x + 3, (int)cuadrante.y + 3);
+        area = mtx.GetRange((int)cuadrante.x, (int)cuadrante.y, (int)cuadrante.x + xSize, (int)cuadrante.y + ySize);
         total.AddRange(fila);
         total.AddRange(columna);
         total.AddRange(area);
