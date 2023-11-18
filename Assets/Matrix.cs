@@ -88,16 +88,16 @@ public class Matrix<T> : IEnumerable<T>
 		get
         {
             //IMPLEMENTAR
-            if (x >= _widthX || x < 0 || y >= _heightY || y < 0)
-				throw new System.Exception("Index out");
+            //if (x >= _widthX || x < 0 || y >= _heightY || y < 0)
+			//	throw new System.Exception("Index out");
 
             return _data[x + _widthX * y];
             //return default(T);
 		}
 		set 
 		{
-			if (x >= _widthX || x < 0 || y >= _heightY || y < 0)
-				throw new System.Exception("Index out");
+			//if (x >= _widthX || x < 0 || y >= _heightY || y < 0)
+			//	throw new System.Exception("Index out");
 
 			_data[x + _widthX * y] = value;
             //IMPLEMENTAR

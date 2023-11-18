@@ -34,21 +34,30 @@ public class Sudoku : MonoBehaviour
     //-------Variables propias
     private int _lastX = 0, _lastY = 0;
 
+    [Header("Variables propias")] 
+    
     [SerializeField]
-    int xSize = 3, ySize = 3;
+    private bool _autoCreateSudoku = true;
+    [SerializeField]
+    private bool _sequence;
+    
+    [SerializeField]
+    private int xSize = 3, ySize = 3;
+
     
     void Start()
     {
         long mem = System.GC.GetTotalMemory(true);
         feedback.text = string.Format("MEM: {0:f2}MB", mem / (1024f * 1024f));
         memory = feedback.text;
-        _smallSide = xSize;
-        _bigSide = _smallSide * ySize;
+        _smallSide = 3;
+        _bigSide = _smallSide * 3;
         frequency = frequency * Mathf.Pow(r, 2);
         CreateEmptyBoard();
         ClearBoard();
         
-        //CreateNew();
+        if(_autoCreateSudoku)
+			CreateNew();
 
         _lastX = 0; _lastY = 0;
     }
@@ -96,12 +105,12 @@ public class Sudoku : MonoBehaviour
 		    Debug.Log($"La Casilla x= {x} e y= {y} esta llena");
 		    
 		    x++;
-		    if (x >= matrixParent.HeightY)
+		    if (x >= matrixParent.WidthX)
 		    {
 			    x = 0;
 			    y++;
 
-			    if (y >= matrixParent.WidthX)
+			    if (y >= matrixParent.HeightY)
 			    {
 					Debug.Log("La ultima esta llena");
 				    return true;
@@ -114,13 +123,12 @@ public class Sudoku : MonoBehaviour
 		    return RecuSolve(matrixParent, x, y, matrixParent.Capacity, solution);
 	    }
 	    
-	    //int count = 1;
 	    Debug.Log($"La casilla : X= {x} ; Y= {y} Está vacia");
 	    Debug.Log($"{matrixParent[x,y]} Valor en casilla");
 	    Debug.Log($"{matrixParent.Capacity} capacity total");
 
 	    
-	    for (int i = 1; i <= 9; i++)
+	    for (int i = 1; i <= 9; i++) //Cambiar el 9 a variable X*Y
 	    {
 		    Debug.Log($"Puebo el valor {i} En La casilla : X= {x} ; Y= {y}");
 		   
@@ -134,18 +142,17 @@ public class Sudoku : MonoBehaviour
 			    
 			    solution.Add(p);
 
-			    count++;
 			    //--
 			    Debug.Log($"En la casilla : X= {x} ; Y= {y} va el valor : {i}");
 			    _lastX = x + 1;
 			    _lastY = y;
 			    
-			    if (_lastX >= matrixParent.HeightY)
+			    if (_lastX >= matrixParent.WidthX)
 			    {
 				    _lastX = 0;
 				    _lastY = y+1;
 				
-				    if (_lastY >= matrixParent.WidthX)
+				    if (_lastY >= matrixParent.HeightY)
 				    {
 					    return true; //Aca se termina termina
 				    }
@@ -158,7 +165,6 @@ public class Sudoku : MonoBehaviour
 			    }
 			    else
 			    {
-				    count--;
 				    matrixParent[x, y] = 0;
 			    }
 		    }
@@ -168,79 +174,6 @@ public class Sudoku : MonoBehaviour
 	    return false;
     }
 	
-	bool RecuSolve(Matrix<int> matrixParent, int x, int y)
-	{
-		//Aplicar recuercion para ir resolviendo
-	    
-		Debug.Log($"Ni bien empiezo : X= {x} ; Y= {y}");
-	    
-		if (_board[x, y].locked)
-		{
-			Debug.Log($"La Casilla x= {x} e y= {y} esta llena");
-		    
-			x++;
-			if (x >= matrixParent.HeightY)
-			{
-				x = 0;
-				y++;
-
-				if (y >= matrixParent.WidthX)
-				{
-					Debug.Log("La ultima esta llena");
-					return true;
-				}
-			    
-				Debug.Log($"La Casilla x ahora vale {x}");
-				Debug.Log($"La Casilla y ahora vale {y}");
-			}
-	
-			return RecuSolve(matrixParent, x, y);
-		}
-	    
-		//int count = 1;
-		Debug.Log($"La casilla : X= {x} ; Y= {y} Está vacia");
-		Debug.Log($"{matrixParent[x,y]} Valor en casilla");
-		Debug.Log($"{matrixParent.Capacity} capacity total");
-
-	    
-		for (int i = 1; i <= xSize*xSize; i++)
-		{
-			Debug.Log($"Puebo el valor {i} En La casilla : X= {x} ; Y= {y}");
-		   
-			if (CanPlaceValue(matrixParent,i,x,y))
-			{
-				matrixParent[x, y] = i;
-			    
-				Debug.Log($"En la casilla : X= {x} ; Y= {y} va el valor : {i}");
-				_lastX = x + 1;
-				_lastY = y;
-			    
-				if (_lastX >= matrixParent.HeightY)
-				{
-					_lastX = 0;
-					_lastY = y+1;
-				
-					if (_lastY >= matrixParent.WidthX)
-					{
-						return true; //Aca se termina termina
-					}
-				}
-
-				if (RecuSolve(matrixParent, _lastX, _lastY)) //Recursar asi con un slo click sigue
-				{
-					//Si vuelve true, se completa
-					return true;
-				}
-				else
-				{
-					matrixParent[x, y] = 0;
-				}
-			}
-		}
-
-		Debug.Log($"No pude poner ningun valor");
-		return false;
-	}
 	
     void OnAudioFilterRead(float[] array, int channels)
     {
@@ -296,15 +229,38 @@ public class Sudoku : MonoBehaviour
         memory = string.Format("MEM: {0:f2}MB", mem / (1024f * 1024f));
         canSolve = result ? " VALID" : " INVALID";
 		
-        //TranslateAllValues(_createdMatrix);
-        StartCoroutine(ShowSequence(solution));
+        if(_sequence)
+			StartCoroutine(ShowSequence(solution));
+        else
+			TranslateAllValues(_createdMatrix);
 
         //???
     }
 
     void CreateSudoku()
     {
-	    //difficulty = 82;
+	    StopAllCoroutines();
+	    nums = new List<int>();
+	    canPlayMusic = false;
+	    ClearBoard();
+	    List<Matrix<int>> l = new List<Matrix<int>>();
+	    watchdog = 100000;
+	    GenerateValidLine(_createdMatrix, 0, 0);
+	    var result = RecuSolve(_createdMatrix, 0,1, _createdMatrix.Capacity,l);
+	    _createdMatrix = l[l.Count-1].Clone();
+	    LockRandomCells();
+	    ClearUnlocked(_createdMatrix);
+	    TranslateAllValues(_createdMatrix);
+	    long mem = System.GC.GetTotalMemory(true);
+	    memory = string.Format("MEM: {0:f2}MB", mem / (1024f * 1024f));
+	    canSolve = result ? " VALID" : " INVALID";
+	    feedback.text = "Pasos: " + l.Count + "/" + l.Count + " - " + memory + " - " + canSolve;
+	    
+	    
+	    
+	    
+	    /*
+	    //difficulty = 82;	
         StopAllCoroutines();
         nums = new List<int>();
         canPlayMusic = false;
@@ -321,7 +277,7 @@ public class Sudoku : MonoBehaviour
         _createdMatrix = l[l.Count-1].Clone();
  
         //
-        difficulty = Random.Range(1, 82);
+        //difficulty = Random.Range(1, 82);
         LockRandomCells();
         ClearUnlocked(_createdMatrix);
         TranslateAllValues(_createdMatrix);
@@ -330,12 +286,12 @@ public class Sudoku : MonoBehaviour
         long mem = System.GC.GetTotalMemory(true);
         memory = string.Format("MEM: {0:f2}MB", mem / (1024f * 1024f));
         canSolve = result ? " VALID" : " INVALID";
-        feedback.text = "Pasos: " + l.Count + "/" + l.Count + " - " + memory + " - " + canSolve;
+        feedback.text = "Pasos: " + l.Count + "/" + l.Count + " - " + memory + " - " + canSolve;*/
     }
 	void GenerateValidLine(Matrix<int> mtx, int x, int y)
 	{
-		int[]aux = new int[xSize * ySize];
-		for (int i = 0; i < xSize * ySize; i++) 
+		int[]aux = new int[9];
+		for (int i = 0; i < 9; i++) 
 		{
 			aux [i] = i + 1;
 		}
@@ -415,50 +371,50 @@ public class Sudoku : MonoBehaviour
 
     bool CanPlaceValue(Matrix<int> mtx, int value, int x, int y)
     {
-        List<int> fila = new List<int>();
-        List<int> columna = new List<int>();
-        List<int> area = new List<int>();
-        List<int> total = new List<int>();
+	    List<int> fila = new List<int>();
+	    List<int> columna = new List<int>();
+	    List<int> area = new List<int>();
+	    List<int> total = new List<int>();
 
-        Vector2 cuadrante = Vector2.zero;
+	    Vector2 cuadrante = Vector2.zero;
 
-        for (int i = 0; i < mtx.HeightY; i++)
-        {
-            for (int j = 0; j < mtx.WidthX; j++)
-            {
-                if (i != y && j == x) columna.Add(mtx[j, i]);
-                else if(i == y && j != x) fila.Add(mtx[j,i]);
-            }
-        }
+	    for (int i = 0; i < mtx.HeightY; i++)
+	    {
+		    for (int j = 0; j < mtx.WidthX; j++)
+		    {
+			    if (i != y && j == x) columna.Add(mtx[j, i]);
+			    else if(i == y && j != x) fila.Add(mtx[j,i]);
+		    }
+	    }
 
 
 
-        cuadrante.x = (int)(x / xSize);
+	    cuadrante.x = (int)(x / 3);
 
-        if (x < xSize)
-            cuadrante.x = 0;     
-        else if (x < ySize + xSize)
-            cuadrante.x = xSize;
-        else
-            cuadrante.x = ySize + xSize;
+	    if (x < 3)
+		    cuadrante.x = 0;     
+	    else if (x < 6)
+		    cuadrante.x = 3;
+	    else
+		    cuadrante.x = 6;
 
-        if (y < ySize)
-            cuadrante.y = 0;
-        else if (y < ySize)
-            cuadrante.y = ySize + xSize;
-        else
-            cuadrante.y = ySize + xSize;
-         
-        area = mtx.GetRange((int)cuadrante.x, (int)cuadrante.y, (int)cuadrante.x + xSize, (int)cuadrante.y + ySize);
-        total.AddRange(fila);
-        total.AddRange(columna);
-        total.AddRange(area);
-        total = FilterZeros(total);
+	    if (y < 3)
+		    cuadrante.y = 0;
+	    else if (y < 6)
+		    cuadrante.y = 3;
+	    else
+		    cuadrante.y = 6;
+  
+	    area = mtx.GetRange((int)cuadrante.x, (int)cuadrante.y, (int)cuadrante.x + 3, (int)cuadrante.y + 3);
+	    total.AddRange(fila);
+	    total.AddRange(columna);
+	    total.AddRange(area);
+	    total = FilterZeros(total);
 
-        if (total.Contains(value))
-            return false;
-        else
-            return true;
+	    if (total.Contains(value))
+		    return false;
+	    else
+		    return true;
     }
 
 
