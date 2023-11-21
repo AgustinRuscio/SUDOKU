@@ -224,7 +224,7 @@ public class Sudoku : MonoBehaviour
         nums = new List<int>();
         var solution = new List<Matrix<int>>();
         watchdog = 100000;
-        var result = RecuSolve(_createdMatrix, _lastX,_lastY,1, solution);//????
+        var result = RecuSolve(_createdMatrix, 0,0,1, solution);//????
         long mem = System.GC.GetTotalMemory(true);
         memory = string.Format("MEM: {0:f2}MB", mem / (1024f * 1024f));
         canSolve = result ? " VALID" : " INVALID";
