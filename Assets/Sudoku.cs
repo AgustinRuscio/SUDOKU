@@ -50,8 +50,8 @@ public class Sudoku : MonoBehaviour
         long mem = System.GC.GetTotalMemory(true);
         feedback.text = string.Format("MEM: {0:f2}MB", mem / (1024f * 1024f));
         memory = feedback.text;
-        _smallSide = 3;
-        _bigSide = _smallSide * 3;
+        _smallSide = xSize;
+        _bigSide = _smallSide * ySize;
         frequency = frequency * Mathf.Pow(r, 2);
         CreateEmptyBoard();
         ClearBoard();
@@ -128,7 +128,7 @@ public class Sudoku : MonoBehaviour
 	    Debug.Log($"{matrixParent.Capacity} capacity total");
 
 	    
-	    for (int i = 1; i <= 9; i++) //Cambiar el 9 a variable X*Y
+	    for (int i = 1; i <= xSize*ySize; i++) //Cambiar el 9 a variable X*Y
 	    {
 		    Debug.Log($"Puebo el valor {i} En La casilla : X= {x} ; Y= {y}");
 		   
@@ -290,8 +290,8 @@ public class Sudoku : MonoBehaviour
     }
 	void GenerateValidLine(Matrix<int> mtx, int x, int y)
 	{
-		int[]aux = new int[9];
-		for (int i = 0; i < 9; i++) 
+		int[]aux = new int[xSize*ySize];
+		for (int i = 0; i < xSize*ySize; i++) 
 		{
 			aux [i] = i + 1;
 		}
@@ -371,50 +371,40 @@ public class Sudoku : MonoBehaviour
 
     bool CanPlaceValue(Matrix<int> mtx, int value, int x, int y)
     {
-	    List<int> fila = new List<int>();
-	    List<int> columna = new List<int>();
-	    List<int> area = new List<int>();
-	    List<int> total = new List<int>();
+        List<int> row = new List<int>();
+        List<int> column = new List<int>();
+        List<int> region = new List<int>();
+        List<int> total = new List<int>();
 
-	    Vector2 cuadrante = Vector2.zero;
+        for (int i = 0; i < mtx.WidthX; i++)
+        {
+            if (i != x)
+                row.Add(mtx[i, y]);
+        }
 
-	    for (int i = 0; i < mtx.HeightY; i++)
-	    {
-		    for (int j = 0; j < mtx.WidthX; j++)
-		    {
-			    if (i != y && j == x) columna.Add(mtx[j, i]);
-			    else if(i == y && j != x) fila.Add(mtx[j,i]);
-		    }
-	    }
+        for (int j = 0; j < mtx.HeightY; j++)
+        {
+            if (j != y)
+                column.Add(mtx[x, j]);
+        }
 
+        int regionStartX = (x / xSize) * xSize;
+        int regionStartY = (y / ySize) * ySize;
+        for (int i = regionStartX; i < regionStartX + xSize; i++)
+        {
+            for (int j = regionStartY; j < regionStartY + ySize; j++)
+            {
+                if (i != x || j != y)
+                    region.Add(mtx[i, j]);
+            }
+        }
 
+        total.AddRange(row);
+        total.AddRange(column);
+        total.AddRange(region);
+        total = FilterZeros(total);
 
-	    cuadrante.x = (int)(x / 3);
-
-	    if (x < 3)
-		    cuadrante.x = 0;     
-	    else if (x < 6)
-		    cuadrante.x = 3;
-	    else
-		    cuadrante.x = 6;
-
-	    if (y < 3)
-		    cuadrante.y = 0;
-	    else if (y < 6)
-		    cuadrante.y = 3;
-	    else
-		    cuadrante.y = 6;
-  
-	    area = mtx.GetRange((int)cuadrante.x, (int)cuadrante.y, (int)cuadrante.x + 3, (int)cuadrante.y + 3);
-	    total.AddRange(fila);
-	    total.AddRange(columna);
-	    total.AddRange(area);
-	    total = FilterZeros(total);
-
-	    if (total.Contains(value))
-		    return false;
-	    else
-		    return true;
+        return !total.Contains(value);
     }
 
 
